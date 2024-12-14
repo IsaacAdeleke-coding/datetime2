@@ -1,16 +1,23 @@
+//
+//  datetime.hpp
+//  datetime2
+//
+//  Created by Isaac Adeleke on 12/12/24.
+//
+
 #ifndef DATETIME_HPP
 #define DATETIME_HPP
 
 #include <string>
 
-// Base Class: DateTimeBase
+// Base class for Date and Time
 class DateTimeBase {
 public:
-    virtual std::string toString() const = 0;
-    virtual ~DateTimeBase() = default;
+    virtual std::string toString() const = 0; // Pure virtual method
+    virtual ~DateTimeBase() = default;       // Virtual destructor for polymorphism
 };
 
-// Derived Class: Time
+// Time Class inheriting DateTimeBase
 class Time : public DateTimeBase {
 public:
     int hour, minute, second;
@@ -22,7 +29,7 @@ public:
     std::string toString() const override;
 };
 
-// Derived Class: Date
+// Date Class inheriting DateTimeBase
 class Date : public DateTimeBase {
 public:
     int year, month, day;
@@ -34,25 +41,32 @@ public:
     void addMonths(int months);
     void addYears(int years);
     std::string toString() const override;
+
+    // Calendar Operations
     std::string dayOfWeek() const; // Returns the day of the week
 };
 
-// Derived Class: DateTime
-class DateTime : public Date, public Time {
+// DateTime Class inheriting DateTimeBase
+class DateTime : public DateTimeBase {
 public:
+    Date date;
+    Time time;
     int timeZoneOffset; // Time zone offset in minutes (e.g., -300 for EST)
 
     DateTime(int year, int month, int day, int hour, int minute, int second, int timeZoneOffset = 0);
 
+    // Time Zone Conversion
     void adjustToTimeZone(int newTimeZoneOffset);
-    void applyDaylightSavingTime(int dstStartMonth, int dstStartDay, int dstEndMonth, int dstEndDay);
 
+    // Difference
     static int differenceInSeconds(const DateTime& dt1, const DateTime& dt2);
 
+    // Serialization and Deserialization
     std::string serialize() const;
     static DateTime deserialize(const std::string& serialized);
 
-    std::string format(const std::string& formatString) const;
+    // Formatting
+    std::string format(const std::string& formatString) const override;
 };
 
-#endif // DATETIME_HPP
+#endif
