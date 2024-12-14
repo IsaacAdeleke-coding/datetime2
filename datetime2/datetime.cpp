@@ -1,3 +1,10 @@
+//
+//  datetime.cpp
+//  datetime2
+//
+//  Created by Isaac Adeleke on 12/12/24.
+//
+
 #include "datetime.hpp"
 #include <iomanip>
 #include <sstream>
@@ -48,7 +55,7 @@ bool Date::isLeapYear(int year) const {
 
 int Date::daysInMonth(int year, int month) const {
     if (month == 2) return isLeapYear(year) ? 29 : 28;
-    if (month == 4 || month == 6 || month == 9 || month == 11) return 30;
+    if (month == 4 || 6 || 9 || 11) return 30;
     return 31;
 }
 
@@ -119,12 +126,30 @@ std::string Date::dayOfWeek() const {
 
 // DateTime Implementation
 DateTime::DateTime(int year, int month, int day, int hour, int minute, int second, int timeZoneOffset)
-    : Date(year, month, day), Time(hour, minute, second), timeZoneOffset(timeZoneOffset) {}
+    : date(year, month, day), time(hour, minute, second), timeZoneOffset(timeZoneOffset) {}
 
 void DateTime::adjustToTimeZone(int newTimeZoneOffset) {
     int offsetDifference = newTimeZoneOffset - timeZoneOffset;
-    addSeconds(offsetDifference * 60);
+    time.addSeconds(offsetDifference * 60);
     timeZoneOffset = newTimeZoneOffset;
+}
+
+int DateTime::differenceInSeconds(const DateTime& dt1, const DateTime& dt2) {
+    int totalDays1 = dt1.date.year * 365 + dt1.date.day;
+    for (int i = 0; i < dt1.date.month - 1; ++i) {
+        totalDays1 += dt1.date.daysInMonth(dt1.date.year, i + 1);
+    }
+
+    int totalDays2 = dt2.date.year * 365 + dt2.date.day;
+    for (int i = 0; i < dt2.date.month - 1; ++i) {
+        totalDays2 += dt2.date.daysInMonth(dt2.date.year, i + 1);
+    }
+
+    int dayDifference = totalDays1 - totalDays2;
+    int secondDifference = (dt1.time.hour * 3600 + dt1.time.minute * 60 + dt1.time.second) -
+                           (dt2.time.hour * 3600 + dt2.time.minute * 60 + dt2.time.second);
+
+    return dayDifference * 86400 + secondDifference;
 }
 
 std::string DateTime::serialize() const {
@@ -148,4 +173,32 @@ DateTime DateTime::deserialize(const std::string& serialized) {
     }
 
     return DateTime(year, month, day, hour, minute, second, offset);
+}
+
+std::string DateTime::format(const std::string& formatString) const {
+    string result;
+    for (size_t i = 0; i < formatString.size(); ++i) {
+        if (formatString.substr(i, 4) == "YYYY") {
+            result += to_string(date.year);
+            i += 3;
+        } else if (formatString.substr(i, 2) == "MM") {
+            result += (date.month < 10 ? "0" : "") + to_string(date.month);
+            i += 1;
+        } else if (formatString.substr(i, 2) == "DD") {
+            result += (date.day < 10 ? "0" : "") + to_string(date.day);
+            i += 1;
+        } else if (formatString.substr(i, 2) == "HH") {
+            result += (time.hour < 10 ? "0" : "") + to_string(time.hour);
+            i += 1;
+        } else if (formatString.substr(i, 2) == "MM") {
+            result += (time.minute < 10 ? "0" : "") + to_string(time.minute);
+            i += 1;
+        } else if (formatString.substr(i, 2) == "SS") {
+            result += (time.second < 10 ? "0" : "") + to_string(time.second);
+            i += 1;
+        } else {
+            result += formatString[i];
+        }
+    }
+    return result;
 }
